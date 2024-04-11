@@ -4,6 +4,7 @@ from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Header
 from itertools import islice
 import numpy as np
+import time 
 
 class PointCloudDownsampler:
     def __init__(self):
@@ -17,17 +18,15 @@ class PointCloudDownsampler:
 
     def point_cloud_callback(self, msg):
         # Downsample the point cloud
-        downsampled_msg = self.downsample_point_cloud(msg, 0.025)
+        downsampled_msg = self.downsample_point_cloud(msg, 0.2)
         
         # Publish the downsampled point cloud
         self.pub.publish(downsampled_msg)
 
     def downsample_point_cloud(self, msg, voxel_size):
         points = pc2.read_points(msg, field_names=("x", "y", "z","intensity"), skip_nans=True)
-        downsampled_points = self.voxel_grid_filter(points, voxel_size)
-        intensities = [point[3] for point in points]
-
-        # Creating a new PointCloud2 message with downsampled points
+        points = np.array(list(points))
+        downsampled_points = self.voxel_grid_filter_numpy(points, voxel_size)
         header = Header()
         header.stamp = rospy.Time.now()
         header.frame_id = msg.header.frame_id
@@ -44,6 +43,14 @@ class PointCloudDownsampler:
 
         return downsampled_msg
     
+    
+    def voxel_grid_filter_numpy(self, points, voxel_size):
+        points = np.array(points)
+        voxel_indices = np.floor(points[:, :3] / voxel_size).astype(np.int32)
+        _, indices = np.unique(voxel_indices, axis=0, return_index=True)
+        downsampled_points = points[indices]
+        return downsampled_points
+
 
     def voxel_grid_filter(self, points, voxel_size):
         grid = {}

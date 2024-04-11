@@ -47,7 +47,6 @@ def draw_rectangle(event, x, y, flags, param):
 def pc_to_cam(pcd_path, image_path, extrinsic_matrix, camera_matrix):
     pcd = o3d.io.read_point_cloud(pcd_path)
     image = cv2.imread(image_path)
-    origin_img = image.copy()
 
     # Set up mouse callback to select box area in the image
     cv2.namedWindow("Image")
